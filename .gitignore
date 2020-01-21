@@ -1,0 +1,5 @@
+*.o
+*.a
+test
+chip8
+.gdb_history
