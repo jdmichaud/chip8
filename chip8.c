@@ -18,25 +18,33 @@ void load(chip8_t *chip8, uint8_t *buffer, uint16_t size) {
 }
 
 void step(chip8_t *chip8) {
+  // fetch next instruction opcode.
   uint8_t lsb;
   uint8_t msb;
-  fetch(chip8, &lsb, &msb);
-
-  const instruction_t *instruction;
-  decode(chip8, lsb, msb, &instruction);
+  fetch(&chip8->memory[chip8->pc], &lsb, &msb);
+  // Decode instruction.
+  uint8_t opcode = 0;
+  const instruction_t *instruction = NULL;
+  decode(lsb, msb, g_instructions, &opcode, &instruction);
+  if (instruction != NULL) {
+    fprintf(stderr, "Unknown instruction opcode: 0x%02x at 0x%04x\n", opcode, chip8->pc);
+  }
 
   execute(chip8, lsb, msb, instruction);
+  // Move program counter.
+  chip8->pc += 2;
 }
 
-void fetch(chip8_t *chip, uint8_t *lsb, uint8_t *msb) {
-  *lsb = chip->memory[chip->pc++];
-  *msb = chip->memory[chip->pc++];
+void fetch(uint8_t *memory, uint8_t *lsb, uint8_t *msb) {
+  *lsb = memory[0];
+  *msb = memory[1];
   fprintf(stderr, "fetch lsb %02x msn %02x\n", *lsb, *msb);
 }
 
-void decode(chip8_t *chip, uint8_t lsb, uint8_t msb, const instruction_t **instruction) {
-  uint8_t opcode = (lsb & 0xF0) >> 4;
-  switch (opcode) {
+void decode(uint8_t lsb, uint8_t msb, const instruction_t *instructions,
+  uint8_t *opcode, const instruction_t **instruction) {
+  *opcode = (lsb & 0xF0) >> 4;
+  switch (*opcode) {
     case 0x0:
       break;
     case 0x1:
@@ -50,7 +58,7 @@ void decode(chip8_t *chip, uint8_t lsb, uint8_t msb, const instruction_t **instr
     case 0x5:
       break;
     case 0x6:
-      *instruction = &g_instructions[8];
+      *instruction = &instructions[8];
       break;
     case 0x7:
       break;
@@ -70,8 +78,6 @@ void decode(chip8_t *chip, uint8_t lsb, uint8_t msb, const instruction_t **instr
       break;
     case 0xF:
       break;
-    default:
-      fprintf(stderr, "Unknown instruction opcode: 0x%02x at 0x%04x\n", opcode, chip->pc);
   }
   fprintf(stderr, "instruction: %s\n", (*instruction)->name);
 }

@@ -12,7 +12,7 @@ default: $(TARGET)
 all: default
 re: clean all
 
-OBJECTS = main.o chip8.o debug_chip8.o
+OBJECTS = main.o file.c chip8.o disassembler.o debug_chip8.o
 TEST_OBJECTS = test.o
 HEADERS = $(wildcard *.h)
 

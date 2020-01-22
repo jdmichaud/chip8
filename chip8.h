@@ -113,11 +113,12 @@ void step(chip8_t *chip8);
 /**
  * Fetch the instruction from the program memory.
  */
-void fetch(chip8_t *chip, uint8_t *lsb, uint8_t *msb);
+void fetch(uint8_t *memory, uint8_t *lsb, uint8_t *msb);
 /**
  * Decode the instruction.
  */
-void decode(chip8_t *chip, uint8_t lsb, uint8_t msb, const instruction_t **instruction);
+void decode(uint8_t lsb, uint8_t msb, const instruction_t *instructions,
+  uint8_t *opcode, const instruction_t **instruction);
 /**
  * Execute the instruction.
  */
