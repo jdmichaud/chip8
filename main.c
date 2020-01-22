@@ -3,6 +3,7 @@
 
 #include "file.h"
 #include "chip8.h"
+#include "disassembler.h"
 #include "debug_chip8.h"
 
 #include "debug.h"
@@ -23,10 +24,11 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  chip8_t chip8;
-  init(&chip8);
-  load(&chip8, file.content, file.size);
-  print_chip8(chip8);
-  step(&chip8);
-  print_chip8(chip8);
+  // chip8_t chip8;
+  // init(&chip8);
+  // load(&chip8, file.content, file.size);
+  // print_chip8(chip8);
+  // step(&chip8);
+  // print_chip8(chip8);
+  print_dump(file.content, file.size);
 }

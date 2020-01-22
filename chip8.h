@@ -117,8 +117,7 @@ void fetch(uint8_t *memory, uint8_t *lsb, uint8_t *msb);
 /**
  * Decode the instruction.
  */
-void decode(uint8_t lsb, uint8_t msb, const instruction_t *instructions,
-  uint8_t *opcode, const instruction_t **instruction);
+void decode(uint8_t lsb, uint8_t msb, uint8_t *opcode, uint8_t *instructionIndex);
 /**
  * Execute the instruction.
  */

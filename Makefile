@@ -2,7 +2,7 @@ TARGET = chip8
 TEST_TARGET = test
 LIBS =
 CC = gcc
-CFLAGS = -std=c99 -ggdb3 -Wall
+CFLAGS = -std=c99 -ggdb3 -Wall -D_POSIX_C_SOURCE=200809L
 #CFLAGS = -std=c99 -O3 -Wall
 LDFALGS = -L./
 

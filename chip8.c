@@ -24,13 +24,13 @@ void step(chip8_t *chip8) {
   fetch(&chip8->memory[chip8->pc], &lsb, &msb);
   // Decode instruction.
   uint8_t opcode = 0;
-  const instruction_t *instruction = NULL;
-  decode(lsb, msb, g_instructions, &opcode, &instruction);
-  if (instruction != NULL) {
+  uint8_t instructionIndex = 0;
+  decode(lsb, msb, &opcode, &instructionIndex);
+  if (instructionIndex == -1) {
     fprintf(stderr, "Unknown instruction opcode: 0x%02x at 0x%04x\n", opcode, chip8->pc);
   }
 
-  execute(chip8, lsb, msb, instruction);
+  execute(chip8, lsb, msb, &g_instructions[instructionIndex]);
   // Move program counter.
   chip8->pc += 2;
 }
@@ -38,52 +38,100 @@ void step(chip8_t *chip8) {
 void fetch(uint8_t *memory, uint8_t *lsb, uint8_t *msb) {
   *lsb = memory[0];
   *msb = memory[1];
-  fprintf(stderr, "fetch lsb %02x msn %02x\n", *lsb, *msb);
 }
 
-void decode(uint8_t lsb, uint8_t msb, const instruction_t *instructions,
-  uint8_t *opcode, const instruction_t **instruction) {
+void decode(uint8_t lsb, uint8_t msb, uint8_t *opcode, uint8_t *instructionIndex) {
+  *instructionIndex = 0;
   *opcode = (lsb & 0xF0) >> 4;
   switch (*opcode) {
     case 0x0:
+      // SYS instruction is mostly ignored now. We will handle it but after
+      // testing for CLS and RET.
+      if (msb == 0xE0) *instructionIndex = 1; // CLS
+      if (msb == 0xEE) *instructionIndex = 2; // RET
+      *instructionIndex = 0; // SYS
       break;
     case 0x1:
+      *instructionIndex = 3; // JP
       break;
     case 0x2:
+      *instructionIndex = 4; // CALL
       break;
     case 0x3:
+      *instructionIndex = 5; // SE
       break;
     case 0x4:
+      *instructionIndex = 6; // SNE
       break;
     case 0x5:
+      *instructionIndex = 7; // SE2
       break;
     case 0x6:
-      *instruction = &instructions[8];
+      *instructionIndex = 8; // LD1
       break;
     case 0x7:
+      *instructionIndex = 9; // ADD
       break;
-    case 0x8:
+    case 0x8: {
+      uint8_t suffix = msb & 0x0F;
+      if (suffix < 0x8) *instructionIndex = 10 + suffix;
+      if (suffix == 0xE) *instructionIndex = 18; // SHL
       break;
+    }
     case 0x9:
+      *instructionIndex = 19; // SNE2
       break;
     case 0xA:
+      *instructionIndex = 20; // LDI
       break;
     case 0xB:
+      *instructionIndex = 21; // JP2
       break;
     case 0xC:
+      *instructionIndex = 22; // RND
       break;
     case 0xD:
+      *instructionIndex = 23; // DRW
       break;
     case 0xE:
+      if (msb == 0x9E) *instructionIndex = 24; // SKP
+      if (msb == 0xA1) *instructionIndex = 25; // SKNP
       break;
     case 0xF:
+      switch (msb) {
+        case 0x07:
+          *instructionIndex = 26; // LD3
+          break;
+        case 0x0A:
+          *instructionIndex = 27; // LD4
+          break;
+        case 0x15:
+          *instructionIndex = 28; // LD5
+          break;
+        case 0x18:
+          *instructionIndex = 29; // LD6
+          break;
+        case 0x1E:
+          *instructionIndex = 30; // ADD3
+          break;
+        case 0x29:
+          *instructionIndex = 31; // LD7
+          break;
+        case 0x33:
+          *instructionIndex = 32; // LD8
+          break;
+        case 0x55:
+          *instructionIndex = 33; // LD9
+          break;
+        case 0x65:
+          *instructionIndex = 34; // LD10
+          break;
+      }
       break;
   }
-  fprintf(stderr, "instruction: %s\n", (*instruction)->name);
 }
 
 void execute(chip8_t *chip, uint8_t lsb, uint8_t msb, const instruction_t *instruction) {
-  printf("%s\n", instruction->name);
   instruction->instruction(chip, lsb, msb);
 }
 
