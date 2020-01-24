@@ -1,5 +1,7 @@
 *.o
 *.a
 test
-chip8
+c8
+d8
+libchip8.a
 .gdb_history

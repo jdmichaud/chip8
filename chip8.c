@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "chip8.h"
 
-void init(chip8_t *chip8) {
+void init(chip8_t *chip8, uint8_t *screen) {
   memset(chip8, 0, sizeof(chip8_t));
   // Initialize the program counter to the program start address.
   chip8->pc = 0x200;
@@ -11,6 +12,8 @@ void init(chip8_t *chip8) {
   chip8->sp = (void *) chip8->stack - (void *) chip8->memory;
   // Initialize the character map.
   memcpy(chip8->charmap, g_charmap, sizeof(g_charmap));
+  // Initialize the screen
+  chip8->screen = screen;
 }
 
 void load(chip8_t *chip8, uint8_t *buffer, uint16_t size) {
@@ -141,11 +144,19 @@ void CLS(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
 
 void RET(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
 
-void JP(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+// prio
+void JP(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint16_t nnn = ((lsb & 0x0F) << 8) | msb;
+  chip->pc = nnn;
+}
 
 void CALL(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
 
-void SE(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+// prio
+void SE(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  if (x == msb) chip->pc += 2;
+}
 
 void SNE(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
 
@@ -156,7 +167,11 @@ void LD1(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   chip->v[registerIndex] = msb;
 }
 
-void ADD(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+// prio
+void ADD(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  chip->v[x] += msb;
+}
 
 void LD2(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
 
@@ -178,13 +193,32 @@ void SHL(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
 
 void SNE2(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
 
-void LDI(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+// prio
+void LDI(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint16_t nnn = ((lsb & 0x0F) << 8) | msb;
+  chip->i = nnn;
+}
 
 void JP2(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
 
-void RND(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+// prio
+void RND(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  uint8_t randomValue = (uint8_t) rand() / ((float) (255 / RAND_MAX));
+  chip->v[x] += randomValue & msb;
+}
 
-void DRW(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+// prio
+void DRW(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  uint8_t y = (msb & 0xF0) >> 4;
+  uint8_t n = msb & 0x0F;
+  fprintf(stdout, "DRAW! %u %u from 0x%04X nimble %u\n", chip->v[x], chip->v[y], chip->i, n);
+  if (chip->screen != NULL) {
+    printf("%04X >>> %04X\n", chip->i & 0x0FFF, x + y * 32);
+    memcpy(&chip->screen[x + y * 32], &chip->memory[chip->i & 0x0FFF], n);
+  }
+}
 
 void SKP(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
 
@@ -207,4 +241,3 @@ void LD8(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
 void LD9(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
 
 void LD10(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
-

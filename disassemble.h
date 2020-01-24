@@ -4,7 +4,7 @@
 #include "file.h"
 
 char **disassemble(uint8_t *dump, uint16_t size);
-void print_dump(uint8_t *dump, uint16_t size);
+void print_dump(uint8_t *dump, uint16_t size, uint16_t offset);
 
 char *disassembler_SYS(uint8_t lsb, uint8_t msb);
 char *disassembler_CLS(uint8_t lsb, uint8_t msb);

@@ -1,33 +1,46 @@
-TARGET = chip8
-TEST_TARGET = test
-LIBS =
+LIB_TARGET = libchip8.a
+DIS_TARGET = d8
+CHIP_TARGET = c8
 CC = gcc
-CFLAGS = -std=c99 -ggdb3 -Wall -D_POSIX_C_SOURCE=200809L
-#CFLAGS = -std=c99 -O3 -Wall
-LDFALGS = -L./
+AR = ar
+CFLAGS = -std=c99 -ggdb3 -Wall -D_POSIX_C_SOURCE=200809L -Iraylib-2.5.0-Linux-amd64/include/
 
 .PHONY: default all clean
 
-default: $(TARGET)
+default: $(LIB_TARGET)
 all: default
 re: clean all
 
-OBJECTS = main.o file.c chip8.o disassembler.o debug_chip8.o
-TEST_OBJECTS = test.o
 HEADERS = $(wildcard *.h)
 
-%.o: %.c $(HEADERS)
-	$(CC) $(CFLAGS) -c $< -o $@
+LIB_SRCS = chip8.c disassemble.c debug_chip8.c
+LIB_OBJS = $(patsubst %.c,%.o,$(LIB_SRCS))
 
-.PRECIOUS: $(TARGET) $(OBJECTS)
+DIS_SRCS = d8.c file.c
+DIS_OBJS = $(patsubst %.c,%.o,$(DIS_SRCS))
+DIS_LIBS = -lchip8
+DIS_LDFLAGS = -L.
 
-$(TARGET): $(OBJECTS)
-	$(CC) $(LDFALGS) $(OBJECTS) $(LIBS) -o $@
+CHIP_SRCS = c8.c file.c
+CHIP_OBJS = $(patsubst %.c,%.o,$(CHIP_SRCS))
+CHIP_LIBS = -lchip8 -lraylib
+CHIP_LDFLAGS = -L. -Lraylib-2.5.0-Linux-amd64/lib/
 
-$(TEST_TARGET): $(TEST_OBJECTS)
-	$(CC) $(LDFALGS) $(TEST_OBJECTS) $(LIBS) -o $@
+%: %.c
+	$(CC) $(CFLAGS)  -o $@ $<
+
+$(LIB_TARGET): $(LIB_OBJS)
+	$(AR) rcs $(LIB_TARGET) $(LIB_OBJS)
+
+$(DIS_TARGET): $(DIS_OBJS) $(LIB_TARGET)
+	$(CC) -o $@ $(DIS_LDFLAGS) $(DIS_OBJS) $(DIS_LIBS)
+
+$(CHIP_TARGET): $(CHIP_OBJS) $(LIB_TARGET)
+	$(CC) -o $@ $(CHIP_LDFLAGS) $(CHIP_OBJS) $(CHIP_LIBS)
 
 clean:
 	-rm -f *.o
-	-rm -f $(TARGET)
+	-rm -f $(LIB_TARGET)
+	-rm -f $(CHIP_TARGET)
+	-rm -f $(DIS_TARGET)
 	-rm -f $(TEST_TARGET)

@@ -22,6 +22,7 @@ typedef union {
   /**
    * The first 135 bytes of the reserved memory space will be used for chip8
    * registers and state.
+   * FOr now the screen is also stored in this space in the form of a pointer.
    */
   struct {
     /**
@@ -67,6 +68,10 @@ typedef union {
      * allows for up to 16 levels of nested subroutines.
      */
     uint16_t  stack[0xF];
+    /**
+     * Pointer to the screen memory. Not ideal bu easy.
+     */
+    uint8_t   *screen;
   };
 } chip8_t;
 
@@ -100,7 +105,7 @@ typedef struct {
  * Set the PC to the beginning of the program, the stack pointer to the top of
  * the stack and the character map.
  */
-void init(chip8_t *chip8);
+void init(chip8_t *chip8, uint8_t *screen);
 /**
  * Loads into program memory (starting at 0x200) the provided buffer.
  */

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "disassembler.h"
+#include "disassemble.h"
 #include "file.h"
 #include "chip8.h"
 
@@ -29,16 +29,14 @@ char **disassemble(uint8_t *dump, uint16_t size) {
   return result;
 }
 
-void print_dump(uint8_t *dump, uint16_t size) {
+void print_dump(uint8_t *dump, uint16_t size, uint16_t offset) {
   char **listing = disassemble(dump, size);
   for (uint8_t i = 0; listing[i] != NULL; ++i) {
     if (listing[i] != NULL) {
-      fprintf(stdout, "(0x%04X) 0x%02X%02X %s\n", i << 1, dump[i << 1], dump[(i << 1) + 1], listing[i]);
+      fprintf(stdout, "(0x%04X) 0x%02X%02X %s\n", offset + (i << 1), dump[i << 1], dump[(i << 1) + 1], listing[i]);
+      free(listing[i]);
     }
   }
-  do {
-    free(*listing);
-  } while (listing++);
   free(listing);
 }
 
