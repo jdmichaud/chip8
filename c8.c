@@ -16,6 +16,22 @@ void usage() {
   fprintf(stderr, "usage: chip8 <binfile>\n");
 }
 
+void putImage(uint8_t *screen, uint16_t screenW, uint16_t screenH,
+  uint16_t windowW, uint16_t windowH, Color color) {
+  for (uint16_t i = 0; i < (screenW * screenH / 8); ++i) {
+    for (uint8_t j = 0; j < 8; ++j) {
+      if ((128 >> j) & screen[i]) {
+        uint16_t screenOffset = i * 8 + j;
+        uint16_t screenX = (uint16_t) screenOffset % 64;
+        uint16_t screenY = (uint16_t) screenOffset / 64;
+        uint16_t wRatio = windowW / screenW;
+        uint16_t hRatio = windowH / screenH;
+        DrawRectangle(screenX * wRatio, screenY * hRatio, wRatio, hRatio, color);
+      }
+    }
+  }
+}
+
 int main(int argc, char **argv) {
   if (argc != 2) {
     fprintf(stderr, "error: wrong number of argument, Expected 1.");
@@ -28,11 +44,11 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  InitWindow(64, 32, "chip8");
+  InitWindow(640, 320, "chip8");
 
   chip8_t chip8;
-  uint8_t *screen = malloc(64 * 32 * sizeof (uint8_t));
-  memset(screen, 0, 64 * 32 * sizeof (uint8_t));
+  uint8_t *screen = malloc(64 * 32 / 8 * sizeof (uint8_t));
+  memset(screen, 0, 64 * 32 / 8 * sizeof (uint8_t));
   // Initialize the chip. Attach the screen.
   init(&chip8, screen);
   // Load the roms into memory.
@@ -40,20 +56,11 @@ int main(int argc, char **argv) {
   // Execute.
   while (1) {
     step(&chip8);
-    print_chip8(chip8);
-    BeginDrawing(); {
-      printf("After BeginDrawing\n");
-        uint16_t count = 0;
-        for (uint16_t i = 0; i < (64 * 32); ++i) {
-          if (screen[i] != 0) {
-            DrawPixel((uint16_t) i % 32, (uint16_t) i / 32, BLACK);
-            count++;
-          }
-        }
-        // DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
-      printf("Before EndDrawing %u\n", count);
-    }
+    // print_chip8(chip8);
+    BeginDrawing();
+      ClearBackground(BLACK);
+      putImage(screen, 64, 32, 640, 320, RAYWHITE);
     EndDrawing();
-    while ('\n' != getchar());
+    // while ('\n' != getchar());
   }
 }

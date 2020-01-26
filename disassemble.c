@@ -181,7 +181,7 @@ char *disassembler_RND(uint8_t lsb, uint8_t msb) {
 }
 
 char *disassembler_DRW(uint8_t lsb, uint8_t msb) {
-  char *line = malloc(sizeof("DRW Vx, 0xkkk"));
+  char *line = malloc(sizeof("DRW Vx, Vy, 0xkkk"));
   uint8_t x = lsb & 0x0F;
   uint8_t y = (msb & 0xF0) >> 4;
   uint8_t n = msb & 0x0F;

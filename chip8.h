@@ -36,7 +36,7 @@ typedef union {
      * Chip-8 has 16 general purpose 8-bit registers, usually referred to as Vx,
      * where x is a hexadecimal digit (0 through F).
      */
-    uint8_t   v[0xF];
+    uint8_t   v[0x10];
     /**
      * There is also a 16-bit
      * register called I. This register is generally used to store memory
@@ -67,7 +67,7 @@ typedef union {
      * the interpreter shoud return to when finished with a subroutine. Chip-8
      * allows for up to 16 levels of nested subroutines.
      */
-    uint16_t  stack[0xF];
+    uint16_t  stack[0x10];
     /**
      * Pointer to the screen memory. Not ideal bu easy.
      */

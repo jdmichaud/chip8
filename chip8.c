@@ -8,8 +8,6 @@ void init(chip8_t *chip8, uint8_t *screen) {
   memset(chip8, 0, sizeof(chip8_t));
   // Initialize the program counter to the program start address.
   chip8->pc = 0x200;
-  // Initialize the stack pointer to the first stack addresse.
-  chip8->sp = (void *) chip8->stack - (void *) chip8->memory;
   // Initialize the character map.
   memcpy(chip8->charmap, g_charmap, sizeof(g_charmap));
   // Initialize the screen
@@ -33,9 +31,9 @@ void step(chip8_t *chip8) {
     fprintf(stderr, "Unknown instruction opcode: 0x%02x at 0x%04x\n", opcode, chip8->pc);
   }
 
-  execute(chip8, lsb, msb, &g_instructions[instructionIndex]);
   // Move program counter.
   chip8->pc += 2;
+  execute(chip8, lsb, msb, &g_instructions[instructionIndex]);
 }
 
 void fetch(uint8_t *memory, uint8_t *lsb, uint8_t *msb) {
@@ -147,6 +145,7 @@ void RET(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
 // prio
 void JP(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   uint16_t nnn = ((lsb & 0x0F) << 8) | msb;
+  if (chip->pc == nnn + 2) getchar(); // If we jump to the same address, we're noping.
   chip->pc = nnn;
 }
 
@@ -155,7 +154,7 @@ void CALL(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
 // prio
 void SE(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   uint8_t x = lsb & 0x0F;
-  if (x == msb) chip->pc += 2;
+  if (chip->v[x] == msb) chip->pc += 2;
 }
 
 void SNE(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
@@ -163,8 +162,8 @@ void SNE(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
 void SE2(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
 
 void LD1(chip8_t *chip, uint8_t lsb, uint8_t msb) {
-  uint8_t registerIndex = lsb & 0x0F;
-  chip->v[registerIndex] = msb;
+  uint8_t x = lsb & 0x0F;
+  chip->v[x] = msb;
 }
 
 // prio
@@ -204,19 +203,85 @@ void JP2(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
 // prio
 void RND(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   uint8_t x = lsb & 0x0F;
-  uint8_t randomValue = (uint8_t) rand() / ((float) (255 / RAND_MAX));
-  chip->v[x] += randomValue & msb;
+  uint8_t randomValue = (uint8_t) ((float) rand() / (float) RAND_MAX * 255);
+  chip->v[x] = randomValue & msb;
 }
+
+// To test setSpriteLine in C playground
+// int main() {
+//   uint8_t buffer[] = { 0x08, 0x0, 0x0, 0x0 };
+//   setSpriteLine(buffer, 0, 0x80);
+//   for (uint8_t i = 0; i < 4; ++i) {
+//     fprintf(stdout, "0x%02X ", buffer[i]);
+//   }
+//   fprintf(stdout, "\n");
+//   return 0;
+// }
+
+uint8_t setSpriteLine(uint8_t *screen, uint16_t bitPosition, uint8_t line) {
+  // Retrieve the first byte position and the bit offset in that first byte.
+  uint16_t bytePosition = bitPosition >> 3;
+  uint16_t bitOffset = bitPosition & 0x0007;
+  // Retrieve the fully formed byte from either the first (if position is a
+  // multiple of 8 ot of the two consecutive bytes).
+  uint8_t screenByte = screen[bytePosition];
+  if (bitOffset) {
+    screenByte <<= bitOffset;
+    if (bytePosition < (64 * 32 / 8) - 1) {
+      uint8_t secondByte = screen[bytePosition + 1];
+      screenByte = screenByte | (secondByte >> (8 - bitOffset));
+    }
+  }
+  // XOR the screen byte with the sprite line.
+  uint8_t result = screenByte ^ line;
+  // Check if a pixel was turned off
+  uint8_t collision = (result | screenByte) > result ? 1 : 0;
+  // Write the resulting byte into the screen memory
+  if (bitOffset != 0) {
+    // Example:
+    //    XXXX XXXX >> 3
+    // -> 000X XXXX
+    //    1000 0000 >> (3 - 1)
+    // -> 0010 0000 - 1
+    // -> 0001 1111 ~
+    // -> 1110 0000
+    //    ssss ssss & 1110 0000 (1)
+    // -> sss0 0000 | 000X XXXX
+    // -> sssX XXXX
+    uint8_t tmp = screen[bytePosition] & ((uint8_t) ~((0x80 >> (bitOffset - 1)) - 1));
+    screen[bytePosition] = (result >> bitOffset) | tmp;
+    // Example:
+    //    XXXX XXXX << 3
+    // -> XXXX X000
+    //    0000 0001 << 3
+    // -> 0000 1000 - 1
+    // -> 0000 0111
+    //    ssss ssss & 0000 0111 (1)
+    // -> 0000 0sss | XXXX X000
+    // -> XXXX Xsss
+    if (bytePosition < (64 * 32 / 8) - 1) {
+      tmp = screen[bytePosition + 1] & ((1 << (8 - bitOffset)) - 1); // (1)
+      screen[bytePosition + 1] = (result << (8 - bitOffset)) | tmp;
+    }
+  } else {
+    screen[bytePosition] = result;
+  }
+  return collision;
+}
+
 
 // prio
 void DRW(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   uint8_t x = lsb & 0x0F;
   uint8_t y = (msb & 0xF0) >> 4;
   uint8_t n = msb & 0x0F;
-  fprintf(stdout, "DRAW! %u %u from 0x%04X nimble %u\n", chip->v[x], chip->v[y], chip->i, n);
+  // fprintf(stdout, "DRAW! %u %u from 0x%04X nimble %u\n", chip->v[x], chip->v[y], chip->i, n);
   if (chip->screen != NULL) {
-    printf("%04X >>> %04X\n", chip->i & 0x0FFF, x + y * 32);
-    memcpy(&chip->screen[x + y * 32], &chip->memory[chip->i & 0x0FFF], n);
+    chip->v[0xF] = 0;
+    for (uint16_t i = 0; i < n; ++i) {
+      uint16_t bitPosition = chip->v[x] + (chip->v[y] + i) * 64;
+      chip->v[0xF] = setSpriteLine(chip->screen, bitPosition, chip->memory[(chip->i & 0x0FFF) + i]);
+    }
   }
 }
 
