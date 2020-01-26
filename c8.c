@@ -16,6 +16,9 @@ void usage() {
   fprintf(stderr, "usage: chip8 <binfile>\n");
 }
 
+#define COOLDARK (Color){ 0x20, 0x2A, 0x35, 255 }
+#define COOLGREY (Color){ 0x8F, 0x91, 0x85, 255 }
+
 void putImage(uint8_t *screen, uint16_t screenW, uint16_t screenH,
   uint16_t windowW, uint16_t windowH, Color color) {
   for (uint16_t i = 0; i < (screenW * screenH / 8); ++i) {
@@ -58,8 +61,8 @@ int main(int argc, char **argv) {
     step(&chip8);
     // print_chip8(chip8);
     BeginDrawing();
-      ClearBackground(BLACK);
-      putImage(screen, 64, 32, 640, 320, RAYWHITE);
+      ClearBackground(COOLGREY);
+      putImage(screen, 64, 32, 320, 160, COOLDARK);
     EndDrawing();
     // while ('\n' != getchar());
   }
