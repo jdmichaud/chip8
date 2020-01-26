@@ -138,7 +138,9 @@ void execute(chip8_t *chip, uint8_t lsb, uint8_t msb, const instruction_t *instr
 
 void SYS(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
 
-void CLS(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void CLS(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  memset(chip->screen, 0, 64 * 32 * sizeof (uint8_t));
+}
 
 void RET(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
 
