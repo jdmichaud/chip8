@@ -126,7 +126,8 @@ void decode(uint8_t lsb, uint8_t msb, uint8_t *opcode, uint8_t *instructionIndex
 /**
  * Execute the instruction.
  */
-void execute(chip8_t *chip, uint8_t lsb, uint8_t msb, const instruction_t *instruction);
+void execute(chip8_t *chip, uint8_t lsb, uint8_t msb,
+  const instruction_t *instruction);
 
 // Instructions
 void SYS(chip8_t *chip, uint8_t lsb, uint8_t msb);

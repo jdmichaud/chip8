@@ -142,7 +142,10 @@ void CLS(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   memset(chip->screen, 0, 64 * 32 * sizeof (uint8_t));
 }
 
-void RET(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void RET(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  chip->pc = chip->stack[chip->sp];
+  chip->sp -= chip->sp > 0 ? 1 : 0;
+}
 
 // prio
 void JP(chip8_t *chip, uint8_t lsb, uint8_t msb) {
@@ -151,7 +154,12 @@ void JP(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   chip->pc = nnn;
 }
 
-void CALL(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void CALL(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint16_t nnn = ((lsb & 0x0F) << 8) | msb;
+  chip->sp += 1;
+  chip->stack[chip->sp] = chip->pc;
+  chip->pc = nnn;
+}
 
 // prio
 void SE(chip8_t *chip, uint8_t lsb, uint8_t msb) {
@@ -159,9 +167,16 @@ void SE(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   if (chip->v[x] == msb) chip->pc += 2;
 }
 
-void SNE(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void SNE(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  if (chip->v[x] != msb) chip->pc += 2;
+}
 
-void SE2(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void SE2(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  uint8_t y = (msb & 0xF0) >> 4;
+  if (chip->v[x] == chip->v[y]) chip->pc += 2;
+}
 
 void LD1(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   uint8_t x = lsb & 0x0F;
@@ -174,25 +189,68 @@ void ADD(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   chip->v[x] += msb;
 }
 
-void LD2(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void LD2(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  uint8_t y = (msb & 0xF0) >> 4;
+  chip->v[x] = chip->v[y];
+}
 
-void OR(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void OR(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  uint8_t y = (msb & 0xF0) >> 4;
+  chip->v[x] |= chip->v[y];
+}
 
-void AND(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void AND(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  uint8_t y = (msb & 0xF0) >> 4;
+  chip->v[x] &= chip->v[y];
+}
 
-void XOR(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void XOR(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  uint8_t y = (msb & 0xF0) >> 4;
+  chip->v[x] ^= chip->v[y];
+}
 
-void ADD2(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void ADD2(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  uint8_t y = (msb & 0xF0) >> 4;
+  chip->v[0xF] = ((uint16_t) chip->v[x] + (uint16_t) chip->v[y] > 255) ? 1 : 0;
+  chip->v[x] += chip->v[y];
+}
 
-void SUB(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void SUB(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  uint8_t y = (msb & 0xF0) >> 4;
+  chip->v[0xF] = (chip->v[x] > chip->v[y]) ? 1 : 0;
+  chip->v[x] -= chip->v[y];
+}
 
-void SHR(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void SHR(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  chip->v[0xF] = chip->v[x] & 0x01;
+  chip->v[x] >>= 1;
+}
 
-void SUBN(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void SUBN(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  uint8_t y = (msb & 0xF0) >> 4;
+  chip->v[0xF] = (chip->v[y] > chip->v[x]) ? 1 : 0;
+  chip->v[y] -= chip->v[x];
+}
 
-void SHL(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void SHL(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  chip->v[0xF] = chip->v[x] & 0x80 >> 7;
+  chip->v[x] >>= 1;
+}
 
-void SNE2(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void SNE2(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  uint8_t y = (msb & 0xF0) >> 4;
+  if (chip->v[x] != chip->v[y]) chip->pc += 2;
+}
 
 // prio
 void LDI(chip8_t *chip, uint8_t lsb, uint8_t msb) {
@@ -200,7 +258,10 @@ void LDI(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   chip->i = nnn;
 }
 
-void JP2(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void JP2(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint16_t nnn = ((lsb & 0x0F) << 8) | msb;
+  chip->pc = nnn + chip->v[0];
+}
 
 // prio
 void RND(chip8_t *chip, uint8_t lsb, uint8_t msb) {
@@ -287,24 +348,68 @@ void DRW(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   }
 }
 
-void SKP(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void SKP(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t TODO = 42; // TODO
+}
 
-void SKNP(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void SKNP(chip8_t *chip, uint8_t lsb, uint8_t msb) {} // TODO
 
-void LD3(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void LD3(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  chip->v[x] = chip->dt;
+}
 
-void LD4(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void LD4(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  char c = getchar();
+  uint8_t key = 0x10;
+  while (key == 0x10) {
+    if (c >= 30 && c <= 39) { // between 0 and 9
+      key = c - 30;
+      chip->v[x] = key;
+    } else if (c >= 65 && c <= 70) {  // between A and F
+      key = c - 65 + 10;
+      chip->v[x] = key;
+    }
+  }
+}
 
-void LD5(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void LD5(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  chip->dt = chip->v[x];
+}
 
-void LD6(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void LD6(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  chip->st  = chip->v[x];
+}
 
-void ADD3(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void ADD3(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  chip->i += chip->v[x];
+}
 
-void LD7(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void LD7(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t TODO = 42; // TODO
+}
 
-void LD8(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void LD8(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  chip->memory[chip->i    ] = chip->v[x] / 100 % 10;
+  chip->memory[chip->i + 1] = chip->v[x] / 10 % 10;
+  chip->memory[chip->i + 2] = chip->v[x] % 10;
+}
 
-void LD9(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void LD9(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  for (uint8_t i = 0; i < x; ++i) {
+    chip->memory[chip->i + i] = chip->v[i];
+  }
+}
 
-void LD10(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
+void LD10(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  for (uint8_t i = 0; i < x; ++i) {
+    chip->v[i] = chip->memory[chip->i + i];
+  }
+}
