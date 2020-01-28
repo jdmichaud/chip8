@@ -19,8 +19,10 @@ void usage() {
 #define COOLDARK (Color){ 0x20, 0x2A, 0x35, 255 }
 #define COOLGREY (Color){ 0x8F, 0x91, 0x85, 255 }
 
-void putImage(uint8_t *screen, uint16_t screenW, uint16_t screenH,
-  uint16_t windowW, uint16_t windowH, Color color) {
+void putImage(uint8_t *screen, uint16_t screenW, uint16_t screenH, // chip8 screen info
+  uint16_t originX, uint16_t originY, uint16_t windowW, uint16_t windowH, // window info
+  Color background, Color foreground) {
+  DrawRectangle(originX, originY, windowW, windowH, background);
   for (uint16_t i = 0; i < (screenW * screenH / 8); ++i) {
     for (uint8_t j = 0; j < 8; ++j) {
       if ((128 >> j) & screen[i]) {
@@ -29,7 +31,8 @@ void putImage(uint8_t *screen, uint16_t screenW, uint16_t screenH,
         uint16_t screenY = (uint16_t) screenOffset / 64;
         uint16_t wRatio = windowW / screenW;
         uint16_t hRatio = windowH / screenH;
-        DrawRectangle(screenX * wRatio, screenY * hRatio, wRatio, hRatio, color);
+        DrawRectangle(screenX * wRatio + originX, screenY * hRatio + originY,
+          wRatio, hRatio, foreground);
       }
     }
   }
@@ -61,8 +64,8 @@ int main(int argc, char **argv) {
     step(&chip8);
     // print_chip8(chip8);
     BeginDrawing();
-      ClearBackground(COOLGREY);
-      putImage(screen, 64, 32, 320, 160, COOLDARK);
+      ClearBackground(COOLDARK);
+      putImage(screen, 64, 32, 3, 3, 320, 160, COOLGREY, COOLDARK);
     EndDrawing();
     // while ('\n' != getchar());
   }
