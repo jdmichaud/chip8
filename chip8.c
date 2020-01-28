@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "chip8.h"
 
@@ -349,10 +350,14 @@ void DRW(chip8_t *chip, uint8_t lsb, uint8_t msb) {
 }
 
 void SKP(chip8_t *chip, uint8_t lsb, uint8_t msb) {
-  uint8_t TODO = 42; // TODO
+  uint8_t x = lsb & 0x0F;
+  if (chip->keyboard[chip->v[x]] != 0) chip->pc += 2;
 }
 
-void SKNP(chip8_t *chip, uint8_t lsb, uint8_t msb) {} // TODO
+void SKNP(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  uint8_t x = lsb & 0x0F;
+  if (chip->keyboard[chip->v[x]] == 0) chip->pc += 2;
+}
 
 void LD3(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   uint8_t x = lsb & 0x0F;
@@ -361,16 +366,20 @@ void LD3(chip8_t *chip, uint8_t lsb, uint8_t msb) {
 
 void LD4(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   uint8_t x = lsb & 0x0F;
-  char c = getchar();
   uint8_t key = 0x10;
+  // As long as no key is pressed
   while (key == 0x10) {
-    if (c >= 30 && c <= 39) { // between 0 and 9
-      key = c - 30;
-      chip->v[x] = key;
-    } else if (c >= 65 && c <= 70) {  // between A and F
-      key = c - 65 + 10;
+    // Scan the keyboard
+    for (uint8_t i = 0; i < 0x10; ++i) {
+      if (chip->keyboard[i] != 0) {
+        key = i;
+        break;
+      }
+    }
+    if (key >= 0 && key < 0x10) { // between 0 and F
       chip->v[x] = key;
     }
+    nanosleep((const struct timespec[]){{0, 16000000L}}, NULL); // wait for 16ms.
   }
 }
 
@@ -390,7 +399,9 @@ void ADD3(chip8_t *chip, uint8_t lsb, uint8_t msb) {
 }
 
 void LD7(chip8_t *chip, uint8_t lsb, uint8_t msb) {
-  uint8_t TODO = 42; // TODO
+  uint8_t x = lsb & 0x0F;
+  chip->i = (uint16_t) ((uint8_t *) chip->charmap - chip->memory + chip->v[x]);
+  printf("LD7 Vx: 0x%02X I: 0x%04X\n", chip->v[x], chip->i);
 }
 
 void LD8(chip8_t *chip, uint8_t lsb, uint8_t msb) {

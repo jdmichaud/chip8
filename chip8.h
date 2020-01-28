@@ -72,6 +72,11 @@ typedef union {
      * Pointer to the screen memory. Not ideal bu easy.
      */
     uint8_t   *screen;
+    /**
+     * Pointer to keyboard memory. Index is the key value (0 == 0, 10 == A, 15 == F).
+     * If 0 the key is not pressed. If 1, it is pressed.
+     */
+    uint8_t   keyboard[0x10];
   };
 } chip8_t;
 
