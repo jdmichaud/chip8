@@ -3,14 +3,18 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "raylib.h"
+
 #include "file.h"
 #include "chip8.h"
 #include "disassemble.h"
 #include "debug_chip8.h"
+#include "text.h"
 
 #include "debug.h"
 
-#include "raylib.h"
+const uint16_t WIDTH = 750;
+const uint16_t HEIGHT = 166;
 
 void usage() {
   fprintf(stderr, "usage: chip8 <binfile>\n");
@@ -38,6 +42,72 @@ void putImage(uint8_t *screen, uint16_t screenW, uint16_t screenH, // chip8 scre
   }
 }
 
+void scanKeyboard(chip8_t *chip) {
+  chip->keyboard[0x0] = IsKeyDown(KEY_ZERO) ? 1 : 0;
+  chip->keyboard[0x1] = IsKeyDown(KEY_ONE) ? 1 : 0;
+  chip->keyboard[0x2] = IsKeyDown(KEY_TWO) ? 1 : 0;
+  chip->keyboard[0x3] = IsKeyDown(KEY_THREE) ? 1 : 0;
+  chip->keyboard[0x4] = IsKeyDown(KEY_FOUR) ? 1 : 0;
+  chip->keyboard[0x5] = IsKeyDown(KEY_FIVE) ? 1 : 0;
+  chip->keyboard[0x6] = IsKeyDown(KEY_SIX) ? 1 : 0;
+  chip->keyboard[0x7] = IsKeyDown(KEY_SEVEN) ? 1 : 0;
+  chip->keyboard[0x8] = IsKeyDown(KEY_EIGHT) ? 1 : 0;
+  chip->keyboard[0x9] = IsKeyDown(KEY_NINE) ? 1 : 0;
+
+  chip->keyboard[0xA] = IsKeyDown(KEY_A) ? 1 : 0;
+  chip->keyboard[0xB] = IsKeyDown(KEY_B) ? 1 : 0;
+  chip->keyboard[0xC] = IsKeyDown(KEY_C) ? 1 : 0;
+  chip->keyboard[0xD] = IsKeyDown(KEY_D) ? 1 : 0;
+  chip->keyboard[0xE] = IsKeyDown(KEY_E) ? 1 : 0;
+  chip->keyboard[0xF] = IsKeyDown(KEY_F) ? 1 : 0;
+}
+
+void displayDebugger(chip8_t *chip, uint16_t originX, uint16_t originY,
+  uint16_t windowW, uint16_t windowH, Texture2D *font, Color color) {
+  char **listing = disassemble(chip->program, 0x1000 - 0x200);
+  static char line[256];
+  memset(line, 0, 256 * sizeof (char));
+  const uint16_t pcCursorPosY= (((chip->pc - 0x200) >> 1) * 9) - 1;
+  DrawRectangle(3, pcCursorPosY + 3, windowW, 9, (Color) { 0xFF, 0x7F, 0, 160 });
+  for (uint8_t i = 0; listing[i] != NULL && i < 18; ++i) {
+    if (listing[i] != NULL) {
+      sprintf(line,
+        " (0X%04X) 0X%02X%02X %s\n",
+        0x200 + (i << 1),
+        chip->program[i << 1],
+        chip->program[(i << 1) + 1],
+        listing[i]);
+      print(line, originX, originY + (i * 9), font, color);
+    }
+  }
+}
+
+void displayChip(chip8_t *chip, uint16_t originX, uint16_t originY,
+  Texture2D *font, Color color) {
+  printf("0X%02x\n", chip->v[0x0]);
+  vprint(originX, originY + 9 *  0, font, color, " V0: 0X%02x V8: 0X%02x", chip->v[0x0], chip->v[0x8]);
+  vprint(originX, originY + 9 *  1, font, color, " V1: 0X%02x V9: 0X%02x", chip->v[0x1], chip->v[0x9]);
+  vprint(originX, originY + 9 *  2, font, color, " V2: 0X%02x VA: 0X%02x", chip->v[0x2], chip->v[0xA]);
+  vprint(originX, originY + 9 *  3, font, color, " V3: 0X%02x VB: 0X%02x", chip->v[0x3], chip->v[0xB]);
+  vprint(originX, originY + 9 *  4, font, color, " V4: 0X%02x VC: 0X%02x", chip->v[0x4], chip->v[0xC]);
+  vprint(originX, originY + 9 *  5, font, color, " V5: 0X%02x VD: 0X%02x", chip->v[0x5], chip->v[0xD]);
+  vprint(originX, originY + 9 *  6, font, color, " V6: 0X%02x VE: 0X%02x", chip->v[0x6], chip->v[0xE]);
+  vprint(originX, originY + 9 *  7, font, color, " V7: 0X%02x VF: 0X%02x", chip->v[0x7], chip->v[0xF]);
+
+  vprint(originX, originY + 9 *  8, font, color, "  I: 0X%04x PC: 0X%04x",  chip->i, chip->pc);
+  vprint(originX, originY + 9 *  9, font, color, " DT: 0X%02x ST: 0X%02x", chip->dt, chip->st);
+  vprint(originX, originY + 9 * 10, font, color, " SP: 0X%04x", chip->sp);
+
+  vprint(originX, originY + 9 * 11, font, color, "&0X0 0X%04x &0X8 0X%04x", chip->stack[0x0], chip->stack[0x8]);
+  vprint(originX, originY + 9 * 12, font, color, "&0X1 0X%04x &0X9 0X%04x", chip->stack[0x1], chip->stack[0x9]);
+  vprint(originX, originY + 9 * 13, font, color, "&0X2 0X%04x &0XA 0X%04x", chip->stack[0x2], chip->stack[0xA]);
+  vprint(originX, originY + 9 * 14, font, color, "&0X3 0X%04x &0XB 0X%04x", chip->stack[0x3], chip->stack[0xB]);
+  vprint(originX, originY + 9 * 15, font, color, "&0X4 0X%04x &0XC 0X%04x", chip->stack[0x4], chip->stack[0xC]);
+  vprint(originX, originY + 9 * 16, font, color, "&0X5 0X%04x &0XD 0X%04x", chip->stack[0x5], chip->stack[0xD]);
+  vprint(originX, originY + 9 * 17, font, color, "&0X6 0X%04x &0XE 0X%04x", chip->stack[0x6], chip->stack[0xE]);
+  vprint(originX, originY + 9 * 18, font, color, "&0X7 0X%04x &0XF 0X%04x", chip->stack[0x7], chip->stack[0xF]);
+}
+
 int main(int argc, char **argv) {
   if (argc != 2) {
     fprintf(stderr, "error: wrong number of argument, Expected 1.");
@@ -50,7 +120,8 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  InitWindow(640, 320, "chip8");
+  InitWindow(WIDTH, HEIGHT, "chip8");
+  Texture2D font = loadFont("assets/font.png");
 
   chip8_t chip8;
   uint8_t *screen = malloc(64 * 32 / 8 * sizeof (uint8_t));
@@ -59,14 +130,19 @@ int main(int argc, char **argv) {
   init(&chip8, screen);
   // Load the roms into memory.
   load(&chip8, file.content, file.size);
+
   // Execute.
-  while (1) {
+  while (!IsKeyDown(KEY_Q) && !IsKeyDown(KEY_ESCAPE)) {
+    scanKeyboard(&chip8);
     step(&chip8);
     // print_chip8(chip8);
     BeginDrawing();
       ClearBackground(COOLDARK);
-      putImage(screen, 64, 32, 3, 3, 320, 160, COOLGREY, COOLDARK);
+      putImage(screen, 64, 32, WIDTH - 320 - 3, 3, 320, 160, COOLGREY, COOLDARK);
+      displayDebugger(&chip8, 3, 3, 220, HEIGHT - 6, &font, WHITE);
+      displayChip(&chip8, 3 + 223, 3, &font, WHITE);
     EndDrawing();
     // while ('\n' != getchar());
   }
+  CloseWindow();
 }

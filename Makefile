@@ -3,7 +3,9 @@ DIS_TARGET = d8
 CHIP_TARGET = c8
 CC = gcc
 AR = ar
-CFLAGS = -std=c99 -ggdb3 -Wall -D_POSIX_C_SOURCE=200809L -Iraylib-2.5.0-Linux-amd64/include/
+CFLAGS = -std=c99 -ggdb3 -Wall -fstack-protector-strong					\
+	-D_POSIX_C_SOURCE=200809L -DSUPPORT_FILEFORMAT_BMP 						\
+	-Iraylib-2.5.0-Linux-amd64/include/
 
 .PHONY: default all clean
 
@@ -21,7 +23,7 @@ DIS_OBJS = $(patsubst %.c,%.o,$(DIS_SRCS))
 DIS_LIBS = -lchip8
 DIS_LDFLAGS = -L.
 
-CHIP_SRCS = c8.c file.c
+CHIP_SRCS = c8.c file.c text.c
 CHIP_OBJS = $(patsubst %.c,%.o,$(CHIP_SRCS))
 CHIP_LIBS = -lchip8 -lraylib
 CHIP_LDFLAGS = -L. -Lraylib-2.5.0-Linux-amd64/lib/

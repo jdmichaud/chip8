@@ -41,9 +41,11 @@ void print_dump(uint8_t *dump, uint16_t size, uint16_t offset) {
 }
 
 char *registerOperation(char *name, uint8_t lsb, uint8_t msb) {
-  char *line = malloc(sizeof("Vx, Vy") + strnlen(name, 4));
-  uint8_t x = lsb & 0x0F;
-  uint8_t y = (msb & 0xF0) >> 4;
+  const uint8_t size = strnlen(name, 4) + 1 + sizeof("Vx, Vy") + 1;
+  char *line = malloc(size * sizeof (char));
+  memset(line, 0, size * sizeof (char));
+  const uint8_t x = lsb & 0x0F;
+  const uint8_t y = (msb & 0xF0) >> 4;
   sprintf(line, "%s V%X, V%X", name, x, y);
   return line;
 }
@@ -70,28 +72,28 @@ char *disassembler_RET(uint8_t lsb, uint8_t msb) {
 char *disassembler_JP(uint8_t lsb, uint8_t msb) {
   char *line = malloc(sizeof("JP 0xnnn"));
   uint8_t n = lsb & 0x0F;
-  sprintf(line, "JP 0x%X", (n << 8) | msb);
+  sprintf(line, "JP 0x%04X", (n << 8) | msb);
   return line;
 }
 
 char *disassembler_CALL(uint8_t lsb, uint8_t msb) {
   char *line = malloc(sizeof("CALL 0xnnn"));
   uint8_t n = lsb & 0x0F;
-  sprintf(line, "CALL 0x%X", (n << 8) | msb);
+  sprintf(line, "CALL 0x04%X", (n << 8) | msb);
   return line;
 }
 
 char *disassembler_SE(uint8_t lsb, uint8_t msb) {
   char *line = malloc(sizeof("SE Vx, 0xkk"));
   uint8_t x = lsb & 0x0F;
-  sprintf(line, "SE V%X, 0x%X", x, msb);
+  sprintf(line, "SE V%X, 0x%02X", x, msb);
   return line;
 }
 
 char *disassembler_SNE(uint8_t lsb, uint8_t msb) {
   char *line = malloc(sizeof("SNE Vx, 0xkk"));
   uint8_t x = lsb & 0x0F;
-  sprintf(line, "SNE V%X, 0x%X", x, msb);
+  sprintf(line, "SNE V%X, 0x%02X", x, msb);
   return line;
 }
 
@@ -102,14 +104,14 @@ char *disassembler_SE2(uint8_t lsb, uint8_t msb) {
 char *disassembler_LD1(uint8_t lsb, uint8_t msb) {
   char *line = malloc(sizeof("LD Vx, 0xkk"));
   uint8_t x = lsb & 0x0F;
-  sprintf(line, "LD V%X, 0x%X", x, msb);
+  sprintf(line, "LD V%X, 0x%02X", x, msb);
   return line;
 }
 
 char *disassembler_ADD(uint8_t lsb, uint8_t msb) {
   char *line = malloc(sizeof("ADD Vx, 0xkk"));
   uint8_t x = lsb & 0x0F;
-  sprintf(line, "ADD V%X, 0x%X", x, msb);
+  sprintf(line, "ADD V%X, 0x%02X", x, msb);
   return line;
 }
 
@@ -162,21 +164,21 @@ char *disassembler_SNE2(uint8_t lsb, uint8_t msb) {
 char *disassembler_LDI(uint8_t lsb, uint8_t msb) {
   char *line = malloc(sizeof("LD I, 0xnnn"));
   uint8_t n = lsb & 0x0F;
-  sprintf(line, "LD I, 0x%X", (n << 8) | msb);
+  sprintf(line, "LD I, 0x%03X", (n << 8) | msb);
   return line;
 }
 
 char *disassembler_JP2(uint8_t lsb, uint8_t msb) {
   char *line = malloc(sizeof("JP V0, 0xnnn"));
   uint8_t n = lsb & 0x0F;
-  sprintf(line, "JP V0, 0x%X", (n << 8) | msb);
+  sprintf(line, "JP V0, 0x%03X", (n << 8) | msb);
   return line;
 }
 
 char *disassembler_RND(uint8_t lsb, uint8_t msb) {
   char *line = malloc(sizeof("RND Vx, 0xkkk"));
   uint8_t x = lsb & 0x0F;
-  sprintf(line, "RND V%X, 0x%X", x, msb);
+  sprintf(line, "RND V%X, 0x%03X", x, msb);
   return line;
 }
 
@@ -185,7 +187,7 @@ char *disassembler_DRW(uint8_t lsb, uint8_t msb) {
   uint8_t x = lsb & 0x0F;
   uint8_t y = (msb & 0xF0) >> 4;
   uint8_t n = msb & 0x0F;
-  sprintf(line, "DRW V%X, V%X, 0x%X", x, y, n);
+  sprintf(line, "DRW V%X, V%X, 0x%03X", x, y, n);
   return line;
 }
 
