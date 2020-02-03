@@ -43,12 +43,11 @@ void print(const char *s, const uint16_t posX, const uint16_t posY,
 }
 
 void vprint(const uint16_t posX, const uint16_t posY, const Texture2D *font,
-  const Color color, char *format, ...) {
+  const Color color, const char *format, ...) {
   va_list args;
-  static char s[256];
-  memset(s, 0, 256 * sizeof (char));
+  static char s[64];
   va_start(args, format);
-  snprintf(s, 256, format, args);
+  vsnprintf(s, 64, format, args);
   va_end(args);
   print(s, posX, posY, font, color);
 }

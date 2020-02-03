@@ -82,30 +82,26 @@ void displayDebugger(chip8_t *chip, uint16_t originX, uint16_t originY,
   }
 }
 
-void displayChip(chip8_t *chip, uint16_t originX, uint16_t originY,
-  Texture2D *font, Color color) {
-  printf("0X%02x\n", chip->v[0x0]);
-  vprint(originX, originY + 9 *  0, font, color, " V0: 0X%02x V8: 0X%02x", chip->v[0x0], chip->v[0x8]);
-  vprint(originX, originY + 9 *  1, font, color, " V1: 0X%02x V9: 0X%02x", chip->v[0x1], chip->v[0x9]);
-  vprint(originX, originY + 9 *  2, font, color, " V2: 0X%02x VA: 0X%02x", chip->v[0x2], chip->v[0xA]);
-  vprint(originX, originY + 9 *  3, font, color, " V3: 0X%02x VB: 0X%02x", chip->v[0x3], chip->v[0xB]);
-  vprint(originX, originY + 9 *  4, font, color, " V4: 0X%02x VC: 0X%02x", chip->v[0x4], chip->v[0xC]);
-  vprint(originX, originY + 9 *  5, font, color, " V5: 0X%02x VD: 0X%02x", chip->v[0x5], chip->v[0xD]);
-  vprint(originX, originY + 9 *  6, font, color, " V6: 0X%02x VE: 0X%02x", chip->v[0x6], chip->v[0xE]);
-  vprint(originX, originY + 9 *  7, font, color, " V7: 0X%02x VF: 0X%02x", chip->v[0x7], chip->v[0xF]);
+void displayChip(chip8_t *chip, uint16_t originX, uint16_t originY, Texture2D *font, Color color) {
+  vprint(originX, originY + 9 *  0, font, color, "  I: 0X%04x V0: 0X%02x V8: 0X%02x", chip->i, chip->v[0x0], chip->v[0x8]);
+  vprint(originX, originY + 9 *  1, font, color, " PC: 0X%04x V1: 0X%02x V9: 0X%02x", chip->pc, chip->v[0x1], chip->v[0x9]);
+  vprint(originX, originY + 9 *  2, font, color, "            V2: 0X%02x VA: 0X%02x", chip->v[0x2], chip->v[0xA]);
+  vprint(originX, originY + 9 *  3, font, color, " DT: 0X%02x   V3: 0X%02x VB: 0X%02x", chip->dt, chip->v[0x3], chip->v[0xB]);
+  vprint(originX, originY + 9 *  4, font, color, " ST: 0X%02x   V4: 0X%02x VC: 0X%02x", chip->st, chip->v[0x4], chip->v[0xC]);
+  vprint(originX, originY + 9 *  5, font, color, "            V5: 0X%02x VD: 0X%02x", chip->v[0x5], chip->v[0xD]);
+  vprint(originX, originY + 9 *  6, font, color, "            V6: 0X%02x VE: 0X%02x", chip->v[0x6], chip->v[0xE]);
+  vprint(originX, originY + 9 *  7, font, color, "            V7: 0X%02x VF: 0X%02x", chip->v[0x7], chip->v[0xF]);
 
-  vprint(originX, originY + 9 *  8, font, color, "  I: 0X%04x PC: 0X%04x",  chip->i, chip->pc);
-  vprint(originX, originY + 9 *  9, font, color, " DT: 0X%02x ST: 0X%02x", chip->dt, chip->st);
-  vprint(originX, originY + 9 * 10, font, color, " SP: 0X%04x", chip->sp);
+  vprint(originX, originY + 9 *  9, font, color, " SP: 0X%04x", chip->sp);
 
-  vprint(originX, originY + 9 * 11, font, color, "&0X0 0X%04x &0X8 0X%04x", chip->stack[0x0], chip->stack[0x8]);
-  vprint(originX, originY + 9 * 12, font, color, "&0X1 0X%04x &0X9 0X%04x", chip->stack[0x1], chip->stack[0x9]);
-  vprint(originX, originY + 9 * 13, font, color, "&0X2 0X%04x &0XA 0X%04x", chip->stack[0x2], chip->stack[0xA]);
-  vprint(originX, originY + 9 * 14, font, color, "&0X3 0X%04x &0XB 0X%04x", chip->stack[0x3], chip->stack[0xB]);
-  vprint(originX, originY + 9 * 15, font, color, "&0X4 0X%04x &0XC 0X%04x", chip->stack[0x4], chip->stack[0xC]);
-  vprint(originX, originY + 9 * 16, font, color, "&0X5 0X%04x &0XD 0X%04x", chip->stack[0x5], chip->stack[0xD]);
-  vprint(originX, originY + 9 * 17, font, color, "&0X6 0X%04x &0XE 0X%04x", chip->stack[0x6], chip->stack[0xE]);
-  vprint(originX, originY + 9 * 18, font, color, "&0X7 0X%04x &0XF 0X%04x", chip->stack[0x7], chip->stack[0xF]);
+  vprint(originX, originY + 9 * 10, font, color, "      &0X0 0X%04x &0X8 0X%04x", chip->stack[0x0], chip->stack[0x8]);
+  vprint(originX, originY + 9 * 11, font, color, "      &0X1 0X%04x &0X9 0X%04x", chip->stack[0x1], chip->stack[0x9]);
+  vprint(originX, originY + 9 * 12, font, color, "      &0X2 0X%04x &0XA 0X%04x", chip->stack[0x2], chip->stack[0xA]);
+  vprint(originX, originY + 9 * 13, font, color, "      &0X3 0X%04x &0XB 0X%04x", chip->stack[0x3], chip->stack[0xB]);
+  vprint(originX, originY + 9 * 14, font, color, "      &0X4 0X%04x &0XC 0X%04x", chip->stack[0x4], chip->stack[0xC]);
+  vprint(originX, originY + 9 * 15, font, color, "      &0X5 0X%04x &0XD 0X%04x", chip->stack[0x5], chip->stack[0xD]);
+  vprint(originX, originY + 9 * 16, font, color, "      &0X6 0X%04x &0XE 0X%04x", chip->stack[0x6], chip->stack[0xE]);
+  vprint(originX, originY + 9 * 17, font, color, "      &0X7 0X%04x &0XF 0X%04x", chip->stack[0x7], chip->stack[0xF]);
 }
 
 int main(int argc, char **argv) {
