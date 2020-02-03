@@ -12,10 +12,12 @@ typedef struct line_list_s {
 } line_list_t;
 
 char **disassemble(uint8_t *dump, uint16_t size) {
+  printf("size %u\n", size);
   char **result = malloc((size + 1) * sizeof (char *));
-  result[size] = NULL;
+  memset(result, 0, (size + 1) * sizeof (char *));
   uint8_t *content = dump;
   for (uint16_t i = 0; i < size; i += 2, content += 2) {
+    printf("loop %u\n", i);
     uint8_t lsb;
     uint8_t msb;
     fetch(content, &lsb, &msb);
@@ -70,16 +72,16 @@ char *disassembler_RET(uint8_t lsb, uint8_t msb) {
 }
 
 char *disassembler_JP(uint8_t lsb, uint8_t msb) {
-  char *line = malloc(sizeof("JP 0xnnn"));
+  char *line = malloc(sizeof("JP 0x0nnn"));
   uint8_t n = lsb & 0x0F;
   sprintf(line, "JP 0x%04X", (n << 8) | msb);
   return line;
 }
 
 char *disassembler_CALL(uint8_t lsb, uint8_t msb) {
-  char *line = malloc(sizeof("CALL 0xnnn"));
+  char *line = malloc(sizeof("CALL 0x0nnn"));
   uint8_t n = lsb & 0x0F;
-  sprintf(line, "CALL 0x04%X", (n << 8) | msb);
+  sprintf(line, "CALL 0x%04X", (n << 8) | msb);
   return line;
 }
 
@@ -162,14 +164,14 @@ char *disassembler_SNE2(uint8_t lsb, uint8_t msb) {
 }
 
 char *disassembler_LDI(uint8_t lsb, uint8_t msb) {
-  char *line = malloc(sizeof("LD I, 0xnnn"));
+  char *line = malloc(sizeof("LD I, 0x0nnn"));
   uint8_t n = lsb & 0x0F;
   sprintf(line, "LD I, 0x%03X", (n << 8) | msb);
   return line;
 }
 
 char *disassembler_JP2(uint8_t lsb, uint8_t msb) {
-  char *line = malloc(sizeof("JP V0, 0xnnn"));
+  char *line = malloc(sizeof("JP V0, 0x0nnn"));
   uint8_t n = lsb & 0x0F;
   sprintf(line, "JP V0, 0x%03X", (n << 8) | msb);
   return line;

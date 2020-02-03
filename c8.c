@@ -62,18 +62,30 @@ void scanKeyboard(chip8_t *chip) {
   chip->keyboard[0xF] = IsKeyDown(KEY_F) ? 1 : 0;
 }
 
-void displayDebugger(chip8_t *chip, uint16_t originX, uint16_t originY,
-  uint16_t windowW, uint16_t windowH, Texture2D *font, Color color) {
-  char **listing = disassemble(chip->program, 0x1000 - 0x200);
+void displayDebugger(chip8_t *chip, const uint16_t nbDisplayedLine,
+  const uint16_t originX, const uint16_t originY,
+  const uint16_t windowW, const uint16_t windowH,
+  const Texture2D *font, const Color color) {
+  static uint16_t cursor = 0;
+  printf("0x%02X\n", cursor);
+  // Keep the cursor within the window
+  if (cursor > chip->pc) cursor = chip->pc >= 0x202 ? chip->pc - 2 : chip->pc;
+  const uint16_t upperLimit = chip->pc - ((nbDisplayedLine - 1) * 2);
+  if (cursor <= upperLimit) { /* 2 bytes per instruction */
+    cursor = upperLimit > 0x200 ? upperLimit : 0x200;
+  }
+  printf("0x%02X 0x%02X\n", cursor, upperLimit);
+  char **listing = disassemble(chip->memory + cursor, nbDisplayedLine * 2);
+  printf("done\n");
   static char line[256];
   memset(line, 0, 256 * sizeof (char));
-  const uint16_t pcCursorPosY= (((chip->pc - 0x200) >> 1) * 9) - 1;
+  const uint16_t pcCursorPosY= (((chip->pc - cursor) >> 1) * 9) - 1;
   DrawRectangle(3, pcCursorPosY + 3, windowW, 9, (Color) { 0xFF, 0x7F, 0, 160 });
-  for (uint8_t i = 0; listing[i] != NULL && i < 18; ++i) {
+  for (uint8_t i = 0; listing[i] != NULL && i < nbDisplayedLine; ++i) {
     if (listing[i] != NULL) {
       sprintf(line,
         " (0X%04X) 0X%02X%02X %s\n",
-        0x200 + (i << 1),
+        cursor + (i << 1),
         chip->program[i << 1],
         chip->program[(i << 1) + 1],
         listing[i]);
@@ -82,7 +94,8 @@ void displayDebugger(chip8_t *chip, uint16_t originX, uint16_t originY,
   }
 }
 
-void displayChip(chip8_t *chip, uint16_t originX, uint16_t originY, Texture2D *font, Color color) {
+void displayChip(chip8_t *chip, const uint16_t originX, const uint16_t originY,
+  const Texture2D *font, const Color color) {
   vprint(originX, originY + 9 *  0, font, color, "  I: 0X%04x V0: 0X%02x V8: 0X%02x", chip->i, chip->v[0x0], chip->v[0x8]);
   vprint(originX, originY + 9 *  1, font, color, " PC: 0X%04x V1: 0X%02x V9: 0X%02x", chip->pc, chip->v[0x1], chip->v[0x9]);
   vprint(originX, originY + 9 *  2, font, color, "            V2: 0X%02x VA: 0X%02x", chip->v[0x2], chip->v[0xA]);
@@ -135,10 +148,10 @@ int main(int argc, char **argv) {
     BeginDrawing();
       ClearBackground(COOLDARK);
       putImage(screen, 64, 32, WIDTH - 320 - 3, 3, 320, 160, COOLGREY, COOLDARK);
-      displayDebugger(&chip8, 3, 3, 220, HEIGHT - 6, &font, WHITE);
+      displayDebugger(&chip8, 18, 3, 3, 220, HEIGHT - 6, &font, WHITE);
       displayChip(&chip8, 3 + 223, 3, &font, WHITE);
     EndDrawing();
-    // while ('\n' != getchar());
+    getchar();
   }
   CloseWindow();
 }

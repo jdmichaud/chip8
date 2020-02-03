@@ -148,7 +148,6 @@ void RET(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   chip->sp -= chip->sp > 0 ? 1 : 0;
 }
 
-// prio
 void JP(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   uint16_t nnn = ((lsb & 0x0F) << 8) | msb;
   if (chip->pc == nnn + 2) getchar(); // If we jump to the same address, we're noping.
@@ -159,10 +158,10 @@ void CALL(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   uint16_t nnn = ((lsb & 0x0F) << 8) | msb;
   chip->sp += 1;
   chip->stack[chip->sp] = chip->pc;
+  printf("%04X -> %04X\n", chip->pc, nnn);
   chip->pc = nnn;
 }
 
-// prio
 void SE(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   uint8_t x = lsb & 0x0F;
   if (chip->v[x] == msb) chip->pc += 2;
@@ -184,7 +183,6 @@ void LD1(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   chip->v[x] = msb;
 }
 
-// prio
 void ADD(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   uint8_t x = lsb & 0x0F;
   chip->v[x] += msb;
@@ -253,7 +251,6 @@ void SNE2(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   if (chip->v[x] != chip->v[y]) chip->pc += 2;
 }
 
-// prio
 void LDI(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   uint16_t nnn = ((lsb & 0x0F) << 8) | msb;
   chip->i = nnn;
@@ -264,7 +261,6 @@ void JP2(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   chip->pc = nnn + chip->v[0];
 }
 
-// prio
 void RND(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   uint8_t x = lsb & 0x0F;
   uint8_t randomValue = (uint8_t) ((float) rand() / (float) RAND_MAX * 255);
@@ -334,7 +330,6 @@ uint8_t setSpriteLine(uint8_t *screen, uint16_t bitPosition, uint8_t line) {
 }
 
 
-// prio
 void DRW(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   uint8_t x = lsb & 0x0F;
   uint8_t y = (msb & 0xF0) >> 4;
