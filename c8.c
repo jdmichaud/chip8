@@ -2,6 +2,7 @@
 // LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./raylib-2.5.0-Linux-amd64/lib/ ./c8 roms/demos/maze.ch8
 #include <stdio.h>
 #include <string.h>
+#include <sys/time.h>
 
 #include "raylib.h"
 
@@ -67,27 +68,24 @@ void displayDebugger(chip8_t *chip, const uint16_t nbDisplayedLine,
   const uint16_t windowW, const uint16_t windowH,
   const Texture2D *font, const Color color) {
   static uint16_t cursor = 0;
-  printf("0x%02X\n", cursor);
   // Keep the cursor within the window
   if (cursor > chip->pc) cursor = chip->pc >= 0x202 ? chip->pc - 2 : chip->pc;
   const uint16_t upperLimit = chip->pc - ((nbDisplayedLine - 1) * 2);
   if (cursor <= upperLimit) { /* 2 bytes per instruction */
     cursor = upperLimit > 0x200 ? upperLimit + nbDisplayedLine: 0x200;
   }
-  printf("0x%02X 0x%02X\n", cursor, upperLimit);
   char **listing = disassemble(chip->memory + cursor, nbDisplayedLine * 2);
-  printf("done\n");
   static char line[256];
   memset(line, 0, 256 * sizeof (char));
   const uint16_t pcCursorPosY= (((chip->pc - cursor) >> 1) * 9) - 1;
   DrawRectangle(3, pcCursorPosY + 3, windowW, 9, (Color) { 0xFF, 0x7F, 0, 160 });
-  for (uint8_t i = 0; listing[i] != NULL && i < nbDisplayedLine; ++i) {
+  for (uint16_t i = 0; listing[i] != NULL && i < nbDisplayedLine; ++i) {
     if (listing[i] != NULL) {
       sprintf(line,
         " (0X%04X) 0X%02X%02X %s\n",
         cursor + (i << 1),
-        chip->program[i << 1],
-        chip->program[(i << 1) + 1],
+        chip->memory[cursor + (i << 1)],
+        chip->memory[cursor + (i << 1) + 1],
         listing[i]);
       print(line, originX, originY + (i * 9), font, color);
     }
@@ -140,6 +138,9 @@ int main(int argc, char **argv) {
   // Load the roms into memory.
   load(&chip8, file.content, file.size);
 
+  // uint32_t count = 0;
+  // struct timeval stop, start;
+  // gettimeofday(&start, NULL);
   // Execute.
   while (!IsKeyDown(KEY_Q) && !IsKeyDown(KEY_ESCAPE)) {
     // print_chip8(chip8);
@@ -150,8 +151,14 @@ int main(int argc, char **argv) {
       displayDebugger(&chip8, 18, 3, 3, 220, HEIGHT - 6, &font, WHITE);
       displayChip(&chip8, 3 + 223, 3, &font, WHITE);
     EndDrawing();
-    getchar();
+    // getchar();
     step(&chip8);
+    // ++count;
+    // if (count % 1000000 == 0) {
+    //   gettimeofday(&stop, NULL);
+    //   uint64_t diff = (stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec;
+    //   printf("%f, %u, %lu\n", (double) count / (double) diff * 1000000, count, diff);
+    // }
   }
   CloseWindow();
 }

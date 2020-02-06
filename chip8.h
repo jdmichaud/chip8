@@ -77,6 +77,10 @@ typedef union {
      * If 0 the key is not pressed. If 1, it is pressed.
      */
     uint8_t   keyboard[0x10];
+    /**
+     * Time since .
+     */
+    uint32_t   timer;
   };
 } chip8_t;
 

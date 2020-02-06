@@ -23,6 +23,5 @@ int main(int argc, char **argv) {
   if (load_file(argv[1], &file) != 0) {
     return 1;
   }
-
   print_dump(file.content, file.size, 0x200);
 }

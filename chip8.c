@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+#include <sys/time.h>
 
 #include "chip8.h"
 
@@ -13,6 +14,10 @@ void init(chip8_t *chip8, uint8_t *screen) {
   memcpy(chip8->charmap, g_charmap, sizeof(g_charmap));
   // Initialize the screen
   chip8->screen = screen;
+  // Initialize timer
+  struct timeval start;
+  gettimeofday(&start, NULL);
+  chip8->timer = (start.tv_sec * 1000000 + start.tv_usec) / 1000;
 }
 
 void load(chip8_t *chip8, uint8_t *buffer, uint16_t size) {
@@ -49,9 +54,9 @@ void decode(uint8_t lsb, uint8_t msb, uint8_t *opcode, uint8_t *instructionIndex
     case 0x0:
       // SYS instruction is mostly ignored now. We will handle it but after
       // testing for CLS and RET.
+      *instructionIndex = 0; // SYS
       if (msb == 0xE0) *instructionIndex = 1; // CLS
       if (msb == 0xEE) *instructionIndex = 2; // RET
-      *instructionIndex = 0; // SYS
       break;
     case 0x1:
       *instructionIndex = 3; // JP
@@ -135,6 +140,15 @@ void decode(uint8_t lsb, uint8_t msb, uint8_t *opcode, uint8_t *instructionIndex
 
 void execute(chip8_t *chip, uint8_t lsb, uint8_t msb, const instruction_t *instruction) {
   instruction->instruction(chip, lsb, msb);
+  // Manager timer and DT/ST register
+  struct timeval start;
+  gettimeofday(&start, NULL);
+  uint32_t now = start.tv_sec * 1000000 + start.tv_usec / 1000;
+  if (now - chip->timer > 16) {
+    if (chip->dt) chip->dt--;
+    if (chip->st) chip->st--;
+    chip->timer = now;
+  }
 }
 
 void SYS(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
@@ -144,8 +158,10 @@ void CLS(chip8_t *chip, uint8_t lsb, uint8_t msb) {
 }
 
 void RET(chip8_t *chip, uint8_t lsb, uint8_t msb) {
-  chip->pc = chip->stack[chip->sp];
+  // chip->pc = chip->stack[chip->sp];
+  // chip->sp -= chip->sp > 0 ? 1 : 0;
   chip->sp -= chip->sp > 0 ? 1 : 0;
+  chip->pc = chip->stack[chip->sp];
 }
 
 void JP(chip8_t *chip, uint8_t lsb, uint8_t msb) {
@@ -155,10 +171,13 @@ void JP(chip8_t *chip, uint8_t lsb, uint8_t msb) {
 }
 
 void CALL(chip8_t *chip, uint8_t lsb, uint8_t msb) {
+  // uint16_t nnn = ((lsb & 0x0F) << 8) | msb;
+  // chip->sp += 1;
+  // chip->stack[chip->sp] = chip->pc;
+  // chip->pc = nnn;
   uint16_t nnn = ((lsb & 0x0F) << 8) | msb;
-  chip->sp += 1;
   chip->stack[chip->sp] = chip->pc;
-  printf("%04X -> %04X\n", chip->pc, nnn);
+  chip->sp += 1;
   chip->pc = nnn;
 }
 

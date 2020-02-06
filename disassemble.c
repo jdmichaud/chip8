@@ -12,12 +12,10 @@ typedef struct line_list_s {
 } line_list_t;
 
 char **disassemble(uint8_t *dump, uint16_t size) {
-  printf("size %u\n", size);
   char **result = malloc((size + 1) * sizeof (char *));
   memset(result, 0, (size + 1) * sizeof (char *));
   uint8_t *content = dump;
   for (uint16_t i = 0; i < size; i += 2, content += 2) {
-    printf("loop %u\n", i);
     uint8_t lsb;
     uint8_t msb;
     fetch(content, &lsb, &msb);
@@ -33,7 +31,7 @@ char **disassemble(uint8_t *dump, uint16_t size) {
 
 void print_dump(uint8_t *dump, uint16_t size, uint16_t offset) {
   char **listing = disassemble(dump, size);
-  for (uint8_t i = 0; listing[i] != NULL; ++i) {
+  for (uint16_t i = 0; i < size; ++i) {
     if (listing[i] != NULL) {
       fprintf(stdout, "(0x%04X) 0x%02X%02X %s\n", offset + (i << 1), dump[i << 1], dump[(i << 1) + 1], listing[i]);
       free(listing[i]);
@@ -142,10 +140,11 @@ char *disassembler_SUB(uint8_t lsb, uint8_t msb) {
 }
 
 char *disassembler_SHR(uint8_t lsb, uint8_t msb) {
-  char *line = malloc(sizeof("SHR Vx"));
+  char *line = malloc(sizeof("SHR Vx{, Vy}"));
   uint8_t x = lsb & 0x0F;
-  sprintf(line, "SHR V%X", x);
-  return NULL;
+  uint8_t y = (msb & 0xF0) >> 4;
+  sprintf(line, "SHR V%X{, V%X}", x, y);
+  return line;
 }
 
 char *disassembler_SUBN(uint8_t lsb, uint8_t msb) {
@@ -153,10 +152,11 @@ char *disassembler_SUBN(uint8_t lsb, uint8_t msb) {
 }
 
 char *disassembler_SHL(uint8_t lsb, uint8_t msb) {
-  char *line = malloc(sizeof("SHL Vx"));
+  char *line = malloc(sizeof("SHL Vx{, Vy}"));
   uint8_t x = lsb & 0x0F;
-  sprintf(line, "SHL V%X", x);
-  return NULL;
+  uint8_t y = (msb & 0xF0) >> 4;
+  sprintf(line, "SHL V%X{, V%X}", x, y);
+  return line;
 }
 
 char *disassembler_SNE2(uint8_t lsb, uint8_t msb) {
