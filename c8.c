@@ -72,7 +72,7 @@ void displayDebugger(chip8_t *chip, const uint16_t nbDisplayedLine,
   if (cursor > chip->pc) cursor = chip->pc >= 0x202 ? chip->pc - 2 : chip->pc;
   const uint16_t upperLimit = chip->pc - ((nbDisplayedLine - 1) * 2);
   if (cursor <= upperLimit) { /* 2 bytes per instruction */
-    cursor = upperLimit > 0x200 ? upperLimit : 0x200;
+    cursor = upperLimit > 0x200 ? upperLimit + nbDisplayedLine: 0x200;
   }
   printf("0x%02X 0x%02X\n", cursor, upperLimit);
   char **listing = disassemble(chip->memory + cursor, nbDisplayedLine * 2);
@@ -142,9 +142,8 @@ int main(int argc, char **argv) {
 
   // Execute.
   while (!IsKeyDown(KEY_Q) && !IsKeyDown(KEY_ESCAPE)) {
-    scanKeyboard(&chip8);
-    step(&chip8);
     // print_chip8(chip8);
+    scanKeyboard(&chip8);
     BeginDrawing();
       ClearBackground(COOLDARK);
       putImage(screen, 64, 32, WIDTH - 320 - 3, 3, 320, 160, COOLGREY, COOLDARK);
@@ -152,6 +151,7 @@ int main(int argc, char **argv) {
       displayChip(&chip8, 3 + 223, 3, &font, WHITE);
     EndDrawing();
     getchar();
+    step(&chip8);
   }
   CloseWindow();
 }
