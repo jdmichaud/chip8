@@ -44,23 +44,23 @@ void putImage(uint8_t *screen, uint16_t screenW, uint16_t screenH, // chip8 scre
 }
 
 void scanKeyboard(chip8_t *chip) {
-  chip->keyboard[0x0] = IsKeyDown(KEY_ZERO) ? 1 : 0;
-  chip->keyboard[0x1] = IsKeyDown(KEY_ONE) ? 1 : 0;
-  chip->keyboard[0x2] = IsKeyDown(KEY_TWO) ? 1 : 0;
-  chip->keyboard[0x3] = IsKeyDown(KEY_THREE) ? 1 : 0;
-  chip->keyboard[0x4] = IsKeyDown(KEY_FOUR) ? 1 : 0;
-  chip->keyboard[0x5] = IsKeyDown(KEY_FIVE) ? 1 : 0;
-  chip->keyboard[0x6] = IsKeyDown(KEY_SIX) ? 1 : 0;
-  chip->keyboard[0x7] = IsKeyDown(KEY_SEVEN) ? 1 : 0;
-  chip->keyboard[0x8] = IsKeyDown(KEY_EIGHT) ? 1 : 0;
-  chip->keyboard[0x9] = IsKeyDown(KEY_NINE) ? 1 : 0;
+  chip->keyboard[0x0] = IsKeyPressed(KEY_ZERO) ? 1 : 0;
+  chip->keyboard[0x1] = IsKeyPressed(KEY_ONE) ? 1 : 0;
+  chip->keyboard[0x2] = IsKeyPressed(KEY_TWO) ? 1 : 0;
+  chip->keyboard[0x3] = IsKeyPressed(KEY_THREE) ? 1 : 0;
+  chip->keyboard[0x4] = IsKeyPressed(KEY_FOUR) ? 1 : 0;
+  chip->keyboard[0x5] = IsKeyPressed(KEY_FIVE) ? 1 : 0;
+  chip->keyboard[0x6] = IsKeyPressed(KEY_SIX) ? 1 : 0;
+  chip->keyboard[0x7] = IsKeyPressed(KEY_SEVEN) ? 1 : 0;
+  chip->keyboard[0x8] = IsKeyPressed(KEY_EIGHT) ? 1 : 0;
+  chip->keyboard[0x9] = IsKeyPressed(KEY_NINE) ? 1 : 0;
 
-  chip->keyboard[0xA] = IsKeyDown(KEY_A) ? 1 : 0;
-  chip->keyboard[0xB] = IsKeyDown(KEY_B) ? 1 : 0;
-  chip->keyboard[0xC] = IsKeyDown(KEY_C) ? 1 : 0;
-  chip->keyboard[0xD] = IsKeyDown(KEY_D) ? 1 : 0;
-  chip->keyboard[0xE] = IsKeyDown(KEY_E) ? 1 : 0;
-  chip->keyboard[0xF] = IsKeyDown(KEY_F) ? 1 : 0;
+  chip->keyboard[0xA] = IsKeyPressed(KEY_A) ? 1 : 0;
+  chip->keyboard[0xB] = IsKeyPressed(KEY_B) ? 1 : 0;
+  chip->keyboard[0xC] = IsKeyPressed(KEY_C) ? 1 : 0;
+  chip->keyboard[0xD] = IsKeyPressed(KEY_D) ? 1 : 0;
+  chip->keyboard[0xE] = IsKeyPressed(KEY_E) ? 1 : 0;
+  chip->keyboard[0xF] = IsKeyPressed(KEY_F) ? 1 : 0;
 }
 
 void displayDebugger(chip8_t *chip, const uint16_t nbDisplayedLine,
