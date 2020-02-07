@@ -427,14 +427,15 @@ void LD8(chip8_t *chip, uint8_t lsb, uint8_t msb) {
 
 void LD9(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   uint8_t x = lsb & 0x0F;
-  for (uint8_t i = 0; i < x; ++i) {
+  for (uint8_t i = 0; i <= x; ++i) {
     chip->memory[chip->i + i] = chip->v[i];
   }
 }
 
 void LD10(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   uint8_t x = lsb & 0x0F;
-  for (uint8_t i = 0; i < x; ++i) {
+  for (uint8_t i = 0; i <= x; ++i) {
+    printf("0x%02X -> %i - 0x%02X\n", chip->i + i, i, chip->memory[chip->i + i]);
     chip->v[i] = chip->memory[chip->i + i];
   }
 }
