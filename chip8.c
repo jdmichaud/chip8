@@ -154,7 +154,7 @@ void execute(chip8_t *chip, uint8_t lsb, uint8_t msb, const instruction_t *instr
 void SYS(chip8_t *chip, uint8_t lsb, uint8_t msb) {}
 
 void CLS(chip8_t *chip, uint8_t lsb, uint8_t msb) {
-  memset(chip->screen, 0, 64 * 32 * sizeof (uint8_t));
+  memset(chip->screen, 0, 64 * 32 / 8 * sizeof (uint8_t));
 }
 
 void RET(chip8_t *chip, uint8_t lsb, uint8_t msb) {
@@ -261,7 +261,7 @@ void SUBN(chip8_t *chip, uint8_t lsb, uint8_t msb) {
 void SHL(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   uint8_t x = lsb & 0x0F;
   chip->v[0xF] = chip->v[x] & 0x80 >> 7;
-  chip->v[x] >>= 1;
+  chip->v[x] <<= 1;
 }
 
 void SNE2(chip8_t *chip, uint8_t lsb, uint8_t msb) {
@@ -381,19 +381,17 @@ void LD3(chip8_t *chip, uint8_t lsb, uint8_t msb) {
 void LD4(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   uint8_t x = lsb & 0x0F;
   uint8_t key = 0x10;
-  // As long as no key is pressed
-  while (key == 0x10) {
-    // Scan the keyboard
-    for (uint8_t i = 0; i < 0x10; ++i) {
-      if (chip->keyboard[i] != 0) {
-        key = i;
-        break;
-      }
+  // As long as no key is pressed, scan the keyboard
+  for (uint8_t i = 0; i < 0x10; ++i) {
+    if (chip->keyboard[i] == 1) {
+      key = i;
+      break;
     }
-    if (key >= 0 && key < 0x10) { // between 0 and F
-      chip->v[x] = key;
-    }
-    nanosleep((const struct timespec[]){{0, 16000000L}}, NULL); // wait for 16ms.
+  }
+  if (key >= 0 && key < 0x10) { // between 0 and F
+    chip->v[x] = key;
+  } else {
+    chip->pc -= 2;
   }
 }
 
@@ -414,8 +412,7 @@ void ADD3(chip8_t *chip, uint8_t lsb, uint8_t msb) {
 
 void LD7(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   uint8_t x = lsb & 0x0F;
-  chip->i = (uint16_t) ((uint8_t *) chip->charmap - chip->memory + chip->v[x]);
-  printf("LD7 Vx: 0x%02X I: 0x%04X\n", chip->v[x], chip->i);
+  chip->i = (uint16_t) ((uint8_t *) chip->charmap[chip->v[x]] - chip->memory);
 }
 
 void LD8(chip8_t *chip, uint8_t lsb, uint8_t msb) {
@@ -435,7 +432,6 @@ void LD9(chip8_t *chip, uint8_t lsb, uint8_t msb) {
 void LD10(chip8_t *chip, uint8_t lsb, uint8_t msb) {
   uint8_t x = lsb & 0x0F;
   for (uint8_t i = 0; i <= x; ++i) {
-    printf("0x%02X -> %i - 0x%02X\n", chip->i + i, i, chip->memory[chip->i + i]);
     chip->v[i] = chip->memory[chip->i + i];
   }
 }
