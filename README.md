@@ -16,5 +16,9 @@ make d8
 
 To run a rom:
 ```
-./c8 <roms_file>
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./raylib-2.5.0-Linux-amd64/lib/ ./c8 <roms_file>
 ```
+
+## Dependencies
+
+This chip8 emulator relied on [raylib](https://www.raylib.com/).
