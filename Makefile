@@ -3,9 +3,15 @@ DIS_TARGET = d8
 CHIP_TARGET = c8
 CC = gcc
 AR = ar
-CFLAGS = -std=c99 -ggdb3 -Wall -fstack-protector-strong					\
-	-D_POSIX_C_SOURCE=200809L -DSUPPORT_FILEFORMAT_BMP 						\
-	-Iraylib-2.5.0-Linux-amd64/include/
+SANITIZE_FLAGS = -fsanitize=undefined                           \
+  -fsanitize=pointer-overflow -fsanitize=float-divide-by-zero   \
+  -fsanitize=alignment -fsanitize=bounds-strict                 \
+  -fsanitize=signed-integer-overflow -fsanitize=leak            \
+  -fsanitize=address -fsanitize=integer-divide-by-zero          \
+  -fsanitize=null
+CFLAGS = -std=c99 -ggdb3 -Wall -fstack-protector-strong          \
+	-D_POSIX_C_SOURCE=200809L -DSUPPORT_FILEFORMAT_BMP            \
+	-Iraylib-2.5.0-Linux-amd64/include/ $(SANITIZE_FLAGS)
 
 .PHONY: default all clean
 
@@ -25,7 +31,7 @@ DIS_LDFLAGS = -L.
 
 CHIP_SRCS = c8.c file.c text.c
 CHIP_OBJS = $(patsubst %.c,%.o,$(CHIP_SRCS))
-CHIP_LIBS = -lchip8 -lraylib
+CHIP_LIBS = -lchip8 -lraylib $(SANITIZE_FLAGS)
 CHIP_LDFLAGS = -L. -Lraylib-2.5.0-Linux-amd64/lib/
 
 %: %.c
