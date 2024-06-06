@@ -1,8 +1,9 @@
 // ls *.c *.h | entr bash -c 'make && echo "done"'
-// LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./raylib-2.5.0-Linux-amd64/lib/ ./c8 roms/demos/maze.ch8
+// LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./raylib-5.0_linux_amd64/lib/ ./c8 roms/demos/maze.ch8
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
+#include <assert.h>
 
 #include "raylib.h"
 
@@ -16,6 +17,9 @@
 
 const uint16_t WIDTH = 750;
 const uint16_t HEIGHT = 166;
+
+// 256 is enough for everyone
+#define BUFFER_SIZE 256
 
 void usage() {
   fprintf(stderr, "usage: chip8 <binfile>\n");
@@ -74,21 +78,21 @@ void displayDebugger(chip8_t *chip, const uint16_t nbDisplayedLine,
   if (cursor <= upperLimit) { /* 2 bytes per instruction */
     cursor = upperLimit > 0x200 ? upperLimit + nbDisplayedLine: 0x200;
   }
-  char **listing = disassemble(chip->memory + cursor, nbDisplayedLine * 2);
-  static char line[256];
-  memset(line, 0, 256 * sizeof (char));
+  assert(nbDisplayedLine * 2 < BUFFER_SIZE);
+  char listing[BUFFER_SIZE * BUFFER_SIZE];
+  disassemble(chip->memory + cursor, nbDisplayedLine * 2, listing);
+  static char line[BUFFER_SIZE + 32];
+  memset(line, 0, BUFFER_SIZE + 32 * sizeof (char));
   const uint16_t pcCursorPosY= (((chip->pc - cursor) >> 1) * 9) - 1;
   DrawRectangle(3, pcCursorPosY + 3, windowW, 9, (Color) { 0xFF, 0x7F, 0, 160 });
-  for (uint16_t i = 0; listing[i] != NULL && i < nbDisplayedLine; ++i) {
-    if (listing[i] != NULL) {
-      sprintf(line,
-        " (0X%04X) 0X%02X%02X %s\n",
-        cursor + (i << 1),
-        chip->memory[cursor + (i << 1)],
-        chip->memory[cursor + (i << 1) + 1],
-        listing[i]);
-      print(line, originX, originY + (i * 9), font, color);
-    }
+  for (uint16_t i = 0; i < nbDisplayedLine; ++i) {
+    sprintf(line,
+      " (0X%04X) 0X%02X%02X %.256s\n",
+      cursor + (i << 1),
+      chip->memory[cursor + (i << 1)],
+      chip->memory[cursor + (i << 1) + 1],
+      &listing[i * BUFFER_SIZE]);
+    print(line, originX, originY + (i * 9), font, color);
   }
 }
 

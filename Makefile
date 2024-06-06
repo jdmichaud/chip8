@@ -9,9 +9,12 @@ SANITIZE_FLAGS = -fsanitize=undefined                           \
   -fsanitize=signed-integer-overflow -fsanitize=leak            \
   -fsanitize=address -fsanitize=integer-divide-by-zero          \
   -fsanitize=null
-CFLAGS = -std=c99 -ggdb3 -Wall -fstack-protector-strong          \
+CDEBUGFLAGS = -std=c99 -ggdb3 -Wall -fstack-protector-strong    \
 	-D_POSIX_C_SOURCE=200809L -DSUPPORT_FILEFORMAT_BMP            \
-	-Iraylib-2.5.0-Linux-amd64/include/ $(SANITIZE_FLAGS)
+	-Iraylib-5.0_linux_amd64/include/ $(SANITIZE_FLAGS)
+CFLAGS = -std=c99 -O3 -Wall                                     \
+	-D_POSIX_C_SOURCE=200809L -DSUPPORT_FILEFORMAT_BMP            \
+	-Iraylib-5.0_linux_amd64/include/
 
 .PHONY: default all clean
 
@@ -31,8 +34,12 @@ DIS_LDFLAGS = -L.
 
 CHIP_SRCS = c8.c file.c text.c
 CHIP_OBJS = $(patsubst %.c,%.o,$(CHIP_SRCS))
-CHIP_LIBS = -lchip8 -lraylib $(SANITIZE_FLAGS)
-CHIP_LDFLAGS = -L. -Lraylib-2.5.0-Linux-amd64/lib/
+CHIP_LIBS = -lchip8 -lraylib
+CHIP_LDFLAGS = -L. -Lraylib-5.0_linux_amd64/lib/
+
+debug: CFLAGS = $(CDEBUGFLAGS)
+debug: CHIP_LIBS += $(SANITIZE_FLAGS)
+debug: c8
 
 %: %.c
 	$(CC) $(CFLAGS)  -o $@ $<
